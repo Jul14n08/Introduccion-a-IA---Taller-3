@@ -21,7 +21,7 @@ def pintar_casilla(screen, tablero, font):
                 screen.blit(text_surface, text_rect)
 
 def check_ganador(tablero, mark):
-    # Verificar filas y columnaumnas
+    # Verificar filas y columnas
     for i in range(3):
         if (all(tablero[i][j] == mark for j in range(3)) or all(tablero[j][i] == mark for j in range(3))):
             return True
@@ -33,17 +33,85 @@ def check_ganador(tablero, mark):
 
     return False
 
-def min_max(tablero):
-    # TODO: Aqui debe estar la lógica de la máquina para jugar con min-max
+def tablero_lleno(tablero):
+    return all(all(casilla != '' for casilla in fila) for fila in tablero)
+
+def min_max(tablero, profundidad, is_maximizing):
+    # Busca primero si de las opciones que está buscando, hay un ganador o un empate (el algoritmo va a bajar en el arbol de posibilidades hasta que alguna de las tres sentencias se cumpla, y respecto a eso hace las evaluaciones de minimizar y maximizar)
+    if check_ganador(tablero, 'O'):
+        return 1
+    elif check_ganador(tablero, 'X'):
+        return -1
+    elif tablero_lleno(tablero):
+        return 0
     
+    # Si es el posible turno de la máquina, intentará maximizar su puntuación.
+    if is_maximizing:
+        mejor_puntuacion = -float('inf') # Inicializa la mejor puntuación con un valor muy bajo.
+        
+        #Va a analizar todas las casillas vacias (en donde se puede jugar la máquina), y llama min_max
+        for fila in range(3):
+            for columna in range(3):
+                if tablero[fila][columna] == '':
+                    
+                    # Pone temporalmente O en la casilla como si hubiera jugado en esa posición
+                    tablero[fila][columna] = 'O'
+                    
+                    # Llama recursivamente pasa simular las posibilidades que tendría jugando en esa posición
+                    puntuacion = min_max(tablero, profundidad + 1, False)
+                    
+                    # Después de evaluar el movimiento, lo deshace para volver al estado inicial
+                    tablero[fila][columna] = ''
+                    
+                    # Si la puntuación es mejor que en otras jugadas, lo pone en mejor puntuacion
+                    mejor_puntuacion = max(mejor_puntuacion, puntuacion)
+        return mejor_puntuacion
     
-    # Codigo de prueba para mirar que ponga la casilla la maquina
+    # Simulando si es el turno del jugador (is_maximizing es False), intentará minimizar la puntuación de la máquina (osea la peor posibilidad que tendría).
+    else:        
+        peor_puntuacion = float('inf') # Inicializa la peor puntuación con un valor muy alto.
+        
+        #Va a analizar todas las casillas vacias (en donde se puede jugar la máquina), y llama min_max
+        for fila in range(3):
+            for columna in range(3):
+                if tablero[fila][columna] == '':
+                    
+                    # Pone temporalmente X en la casilla como si hubiera jugado en esa posición
+                    tablero[fila][columna] = 'X'
+                    
+                    # Llama min_max pasa simular las posibilidades que tendría la maquina si el jugador jugara en esa posición
+                    puntuacion = min_max(tablero, profundidad + 1, True)
+                    
+                    # Después de evaluar el movimiento, lo deshace para volver al estado inicial
+                    tablero[fila][columna] = ''
+                    
+                    # Si la puntuación es peor para la maquina que en otras jugadas, lo pone en peor puntuacion
+                    peor_puntuacion = min(peor_puntuacion, puntuacion)
+        return peor_puntuacion
+
+def mejor_movimiento(tablero):
+    mejor_puntuacion = -float('inf') #Inicializa la "Mejor" puntuación en negativo infinito y va a tratar de hallar una jugada que lo haga lo más grande posible
+    movimiento = None # Aqui se guarda la mejor jugada que puede hacer con minimax
+    
+    #Va a analizar todas las casillas vacias (en donde se puede jugar), y llama min_max (Primero tratando de minimizar las posibilidades si jugara el jugador)
     for fila in range(3):
         for columna in range(3):
             if tablero[fila][columna] == '':
+                
+                # Pone temporalmente O en la casilla como si hubiera jugado en esa posición
                 tablero[fila][columna] = 'O'
-                return
-    
+                
+                # Llama min_max pasa simular las posibilidades que tendría jugando en esa posición
+                puntuacion = min_max(tablero, 0, False)
+                
+                # Después de evaluar el movimiento, lo deshace para volver al estado inicial
+                tablero[fila][columna] = ''
+                
+                # Si la puntuación de este movimiento es mejor que la puntuación máxima conocida, se actualiza tanto el valor como la casilla que jugaría en el mejor caso.
+                if puntuacion > mejor_puntuacion:
+                    mejor_puntuacion = puntuacion
+                    movimiento = (fila, columna)
+    return movimiento
 
 def main():
     
@@ -68,7 +136,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and jugador_actual == 'X':
                 x, y = event.pos
                 columna = x // 100
                 fila = y // 100
@@ -82,22 +150,21 @@ def main():
                         running = False
                     else:
                         # Verifica si esta lleno el tablero y no hay ganador
-                        if all(all(fila) for fila in tablero):
+                        if tablero_lleno(tablero):
                             print("Empate")
                             running = False
                             
-                    #Cambio de jugador
-                    if jugador_actual == 'X': 
-                        jugador_actual = 'O'
-                    else:
-                        jugador_actual = 'X'
+                    # Cambio de jugador
+                    jugador_actual = 'O'
                         
         if jugador_actual == 'O' and running:
-            min_max(tablero)
-            if check_ganador(tablero, 'O'):
-                print("O gana")
-                running = False
-            jugador_actual = 'X'
+            movimiento = mejor_movimiento(tablero)
+            if movimiento:
+                tablero[movimiento[0]][movimiento[1]] = 'O'
+                if check_ganador(tablero, 'O'):
+                    print("O gana")
+                    running = False
+                jugador_actual = 'X'
 
         screen.fill((255, 255, 255))
         dibujar_tablero(screen)
