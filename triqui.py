@@ -1,8 +1,8 @@
 import pygame
 import sys
 
-x_columnaor = (255, 0, 0)
-o_columnaor = (0, 0, 255)
+x_color = (255, 0, 0)
+o_color = (0, 0, 255)
 
 def dibujar_tablero(screen):
     for x in range(1, 3):
@@ -16,7 +16,7 @@ def pintar_casilla(screen, tablero, font):
             if mark:
                 x = columna * 100 + 100 // 2
                 y = fila * 100 + 100 // 2
-                text_surface = font.render(mark, True, x_columnaor if mark == 'X' else o_columnaor)
+                text_surface = font.render(mark, True, x_color if mark == 'X' else o_color)
                 text_rect = text_surface.get_rect(center=(x, y))
                 screen.blit(text_surface, text_rect)
 
