@@ -31,3 +31,35 @@ El código se organiza en las siguientes funciones:
 ```bash
 python triqui.py
 ```
+
+
+## Estados
+Estado: El estado es la configuración actual del tablero, representada como una matriz de 3x3 con casillas vacías, 'X' o 'O'. En cualquier momento, el estado define cuál es la situación actual del juego.
+Ejemplos de posibles estados:
+
+Estado inicial (tablero vacío):
+
+ ['', '', ''], 
+ ['', '', ''],
+ ['', '', '']
+Estado después de algunos movimientos:
+
+['X', '', 'O'], 
+['O', 'X', ''], 
+['', '', '']
+Estado terminal (jugador X gana):
+
+
+['X', '', 'O'], 
+['O', 'X', ''],
+['', '', 'X']
+
+
+## Espacio problema
+El espacio problema en el Tic-Tac-Toe es el conjunto de todos los posibles tableros (estados) que pueden formarse al colocar X y O en las casillas, mientras que los estados son las configuraciones actuales del tablero en cualquier punto del juego, que evolucionan a medida que los jugadores realizan sus movimientos.
+
+## Minimax y la Función Heurística
+
+Valor +1: si la IA (jugador 'O') gana.
+Valor -1: si el jugador humano (jugador 'X') gana.
+Valor 0: si hay empate.
